@@ -7,18 +7,12 @@ Program QuotientDifference
 
 
 Implicit none
+
 Integer:: n, i, iter, maxiter
-Real, allocatable:: a(:), e(:), q(:)
+Real, allocatable:: a(0:), e(:), q(:)
 Real:: error, tol
 
 ! COMIENZA EL PROGRAMA
-
-Write (*,*) 'Ingrese el grado del polinomio completo'
-Read (*,*) n 
-
-Allocate (a(n))
-Allocate (q(n))
-Allocate (e(n))
 
 CALL ingresa_coeficientes(i,n,a)
 
@@ -34,7 +28,34 @@ Write(*,*) a(n)
 Write(*,*) a(0)
 Write(*,*) 'aaaaaaaaaaaa' !para ver si funciona
 
-    
+
+
+
+
+
+
+
+
+CONTAINS
+
+SUBROUTINE LeeCoeficientes(a,grado)
+integer i,n
+real(8) a(0:)
+
+open(2,FILE="CoeficientesPolinomio.txt", action="read")
+read(2,*)grado
+
+allocate(a(grado))
+
+do i=0,grado 
+	read(2,*)a(i)
+enddo
+
+
+
+END SUBROUTINE
+
+subroutine QuotientDifference()    
 !COMIENZA QD
 q=0.
 e(n)=0.
@@ -73,30 +94,6 @@ Do while (error>tol .and. maxiter>iter)
      error=maxval(abs(e))
 end do
 
-
-
-
-
-
-
-
-CONTAINS
-
-SUBROUTINE ingresa_coeficientes(i,n,a)
-integer:: i,n
-real:: a(n)
-
-Write(*,*) 'Ingrese los coeficientes'
-Do i=0, n                               !Ojo que termina en cero para que sea coherente con x**0 y su coeficiente sea a_0
-  Write(*,*) 'a_',i
-   read(*,*) a(i)
-       ! If (a(i)==0) then 
-        !  Write(*,*) 'El coeficiente debe ser distinto de cero, ingrese otro valor'
-         ! read(*,*) a(i)
-        !end if
-end do
-
-END SUBROUTINE
-
+end subroutine
 
 End program
