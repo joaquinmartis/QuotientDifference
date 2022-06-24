@@ -1,5 +1,6 @@
 Program QuotientDifference
 
+!USE METODOSQD
 !1- Ingresa el grado del polinomio
 !2- Ingresa los coeficientes de forma ordenada
 !3- Comienza QD
@@ -10,8 +11,8 @@ IMPLICIT NONE
 integer ,parameter:: grado=5
 !---------------------------
 integer i ,Metodo,maxiter
-real(8), dimension(1:grado+1) :: VecCoeficientes !Hay un coef  mas que el grado
-real(8), dimension(1:grado) :: VecRaices 
+real(8), dimension(0:grado) :: VecCoeficientes !Hay un coef  mas que el grado
+complex(8), dimension(1:grado) :: VecRaices 
 complex(8), dimension(1:grado) :: VecRaicesCOMPLEJAS
 real(8) tol,diferencia
 
@@ -27,7 +28,7 @@ tol=0.00001
 !------Iteraciones-----!
 !write(*,*)"Ingrese maxima cantidad de iteraciones" 
 !read(*,*)maxiter
-maxiter=270
+maxiter=10
 
 
 Metodo=0
@@ -56,7 +57,7 @@ if (CoeficienteCero(VecCoeficientes,Grado+1)) then !si el metodo es 4 enotnces n
 	!case (3)
 		!call Resolvente(VecCoeficientes)!Falta desarrollar
 	!case default
-		call QuotientDifferenceSub(VecCoeficientes,VecRaices,VecRaicesCOMPLEJAS,grado,tol,maxiter)
+		call QuotientDifferenceSub(VecCoeficientes,VecRaices,grado,tol,maxiter)
 		!call CorrigeSolucion(VecRaices,grado,Metodo,diferencia)
 		!call MuestraRaices(VecRaices,VecRaicesCOMPLEJAS,grado)
 	!end select
@@ -67,18 +68,12 @@ endif
 
 CONTAINS
 !----------------------------------!
-subroutine MuestraRaices(VecRaices,VecRaicesCOMPLEJAS,grado)
-real(8), intent(in) :: VecRaices(:)
-complex(8), intent(in) :: VecRaicesCOMPLEJAS(:)
+subroutine MuestraRaices(VecRaices,grado)
+complex(8), intent(in) :: VecRaices(:)
 integer i,grado
 
 do i=1, grado
-	if (VecRaicesCOMPLEJAS(i)/=0) then
 		write(*,*)"Raiz ",i,": ",VecRaices(i)
-	else
-		write(*,*)"Raiz ",i,": ",VecRaicesCOMPLEJAS(i)
-	endif
-	
 enddo
 
 
@@ -171,10 +166,10 @@ open(2,FILE="CoeficientesPolinomio.txt", action="read")
 
 
 write(*,'(A,I2,A)',advance='NO')"Polinomio de grado ",grado," : "
-do i=grado+1,1 ,-1
+do i=1,grado+1 ,1
 	read(2,*)VecCoeficientes(i)
 	WRITE(*,'(F7.2,A,I2,A)',ADVANCE='NO')VecCoeficientes(i),"x^",i-1," + " !'(F4.2,A,I,A)'
-
+	!VecCoeficientes(i)=VecCoeficientes(i)*((1/5.)**i)
 enddo
 
 write(*,*)
@@ -182,17 +177,18 @@ write(*,*)
 END SUBROUTINE
 !----------------------------------!
 
-subroutine QuotientDifferenceSub(VecCoeficientes,VecRaices,VecRaicesCOMPLEJAS,grado,tol,maxiter)
+subroutine QuotientDifferenceSub(VecCoeficientes,VecRaices,grado,tol,maxiter)
 !parametros 
 real(8) ,intent(inout)::VecCoeficientes(:)
-real(8) , intent(inout) :: VecRaices(:)
-complex(8), dimension(1:grado), intent(inout) :: VecRaicesCOMPLEJAS
+
+complex(8), dimension(1:grado), intent(inout) :: VecRaices
 integer ,intent(in):: grado,maxiter
 real(8) ,intent(in)::tol
 !var locales
+complex(8), dimension(1:grado) :: VecQ_ANT
+real(8) ,dimension(1:grado) :: VecQ
 integer i,iter
 real(8) error
-real(8), dimension(1:grado) :: VecRaices_ANT
 real(8),dimension(0:grado) :: VecError
 real(8) CoefV,CoefU
 
@@ -203,78 +199,80 @@ complex(8) RaizComp1,RaizComp2
 
    
 !COMIENZA QD
-CALL CondicionesIniciales(VecCoeficientes,VecRaices,VecError,grado) 
+CALL CondicionesIniciales(VecCoeficientes,VecQ,VecError,grado) 
+
 iter=1
 error=2*tol 
 write(*,*)"iter",iter
 
 do while (error>tol .AND. maxiter>iter)
 write(*,*)"-------------------------"
-	VecRaices_ANT=VecRaices
+	VecQ_ANT=VecQ
     do i=1, grado   !Calculo la fila de entera en cada iteración y el grado +1 porque el vector comiena en 1 , el el coef de maximo grado esta een grado +1
-       VecRaices(i)=VecError(i)-VecError(i-1)+VecRaices(i)     
+       VecQ(i)=VecError(i)-VecError(i-1)+VecQ(i)     
        
     enddo
     
     
     Do i=1, grado-1      !Como e(0)=e(n)=0 siempre, uso esos límites en el ciclo
-       VecError(i)=VecError(i)*(VecRaices(i+1)/VecRaices(i))   ! Hay un error de tipeo en el pdf que figura q(i-1) pero en la tabla utiliza q(i+1), sino no da
+       VecError(i)=VecError(i)*(VecQ(i+1)/VecQ(i))   ! Hay un error de tipeo en el pdf que figura q(i-1) pero en la tabla utiliza q(i+1), sino no da
     end do
     
 
      iter=iter+1
      error=maxval(abs(VecError))
      write(*,*)"iter",iter
-     write(*,*)"Raices : ",VecRaices
-     write(*,*)VecRaices(1)
+     write(*,*)"Raices : ",VecQ
      write(*,*)"Errores : ",VecError
 end do 
 
-write(*,*)"Sale"
-    if (maxiter<iter) then !si salio por iteraciones del do while significa que no se aproxima a 0 el error maximo
 		do i=0,grado-1
 			if (abs(VecError(i))>tol) then
-				CoefU=VecRaices(i)+VecRaices(i+1)
-				CoefV=(-1)*VecRaices_ANT(i)*VecRaices(i+1) !No se si va el -1 pero lo vi asi
+				CoefU=VecQ(i)+VecQ(i+1)
+				CoefV=(-1)*VecQ_ANT(i)*VecQ(i+1) !No se si va el -1 pero lo vi asi
+				write(*,*)CoefU
+				write(*,*)CoefV
 				CALL MetodoBairstow (VecCoeficientes,grado,tol,CoefU,CoefV)
-				CALL Resolvente(CoefU, CoefV, RaizComp1, RaizComp2)
-				VecRaicesCOMPLEJAS(i)=RaizComp1
-				VecRaicesCOMPLEJAS(i+1)=RaizComp2 ! en i+1
+				CALL Resolvente(-CoefU, -CoefV, RaizComp1, RaizComp2)
+				VecRaices(i)=RaizComp1
+				VecRaices(i+1)=RaizComp2
+			else
+				VecRaices(i+1)=DCMPLX(VecQ(i+1), 0.)
 			endif
 		enddo
-	endif
-
-call MuestraRaices(VecRaices,VecRaicesCOMPLEJAS,grado)
-
+	
+write(*,*)VecRaices
 end subroutine
 
 !----------------------------------!
 
 subroutine CondicionesIniciales(VecCoeficientes,VecRaices,VecError,grado) !Esta Bien
-real(8), intent(inout)::VecCoeficientes(:),VecRaices(:)
+real(8), intent(inout)::VecCoeficientes(0:),VecRaices(1:)
 integer ,intent(in):: grado
 real(8), intent(inout) :: VecError(0:) !NO SACAR ESTE 0, SI LO SACAS REVIENTA EL PROGRAMA
+integer i
 
-VecRaices=0
-VecRaices(1)=-1*(VecCoeficientes(grado+1-1))/(VecCoeficientes(grado+1))
+VecRaices=0.
+VecRaices(1)=-1.*(VecCoeficientes(grado-1))/(VecCoeficientes(grado))
 
 do i=1, grado-1
 
-      VecError(i)=VecCoeficientes((grado+1)-i-1)/VecCoeficientes((grado+1)-i)
-      write(*,*)VecCoeficientes(grado+1-i-1),VecCoeficientes(grado+1-i),"  ",grado-i-1,"i=",i," grado=",grado,VecError(i)
+      VecError(i)=VecCoeficientes(grado-i-1)/VecCoeficientes(grado-i)
+      !write(*,*)VecCoeficientes(grado+1-i-1),VecCoeficientes(grado+1-i),"  ",grado-i-1,"i=",i," grado=",grado,VecError(i)
       
 end do
 
-VecError(0)=0
-VecError(grado)=0
+VecError(0)=0.
+VecError(grado)=0.
 
 write(*,*)"Raices : ",VecRaices
      write(*,*)"Errores : ",VecError
 endsubroutine
+
 !----------------------------------!
 
 subroutine MetodoBairstow (VecCoeficientes,grado,tol,CoefU,CoefV)
-real(8), intent(in) :: VecCoeficientes(:)
+real(8), intent(in) :: VecCoeficientes(0:)
 real(8), intent(inout) :: CoefU,CoefV
 real(8), intent(in) :: tol
 integer, intent(in) ::grado
@@ -289,21 +287,22 @@ do while (error >= tol)
     Q_ant2 = 0.
     P_ant1 = 0.
     P_ant2 = 0.
-	do i=grado, 2, -1
+	do i=grado, 1, -1
 	
 		Q = VecCoeficientes(i) + CoefU*Q_ant1 + CoefV*Q_ant2
 		Q_ant2 = Q_ant1
 		Q_ant1 = Q
+		
 		P = Q + CoefU*P_ant1 + CoefV*P_ant2
 		P_ant3 = P_ant2
         P_ant2 = P_ant1
-        
+        P_ant1= P
 	enddo
-	q = VecCoeficientes(1) + CoefU* Q_ant1 + CoefV* Q_ant2
-
+	q = VecCoeficientes(0) + CoefU* Q_ant1 + CoefV* Q_ant2
+    !write(*,*)"Q ",Q,"Q_ant1 ",Q_ant1,"Q_ant2",Q_ant2,"P: ",P,"P_ant1",P_ant1,"P_ant2",P_ant2,"P_ant3",P_ant3
 	IncrementoH = (Q * P_ant3 - Q_ant1 * P_ant2) / (P_ant2**2. - P_ant1 * P_ant3)
 	IncrementoK = (Q_ant1 * P_ant1 - Q * P_ant2) / (P_ant2**2. - P_ant1 * P_ant3)
-	
+	!write(*,*)"Incremento K: ",IncrementoK
 	CoefU = CoefU +IncrementoH
     CoefV = CoefV +IncrementoK
 
@@ -316,7 +315,6 @@ do while (error >= tol)
 enddo
 
 end subroutine
-
 
 !----------------------------------!
 
@@ -333,5 +331,8 @@ COMPLEX(8), INTENT(OUT) :: c1, c2
     c2 = (-b - sqrt(Discriminante)) / (2. * a)
 
 END SUBROUTINE Resolvente
+
+
+
 !----------------------------------!
 End program
