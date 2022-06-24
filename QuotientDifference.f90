@@ -9,9 +9,9 @@ IMPLICIT NONE
 !----------------------
 integer ,parameter:: grado=5
 !---------------------------
-integer:: i ,Metodo,maxiter
-real(8), dimension(1:grado+1) :: VecCoeficientes
-real(8), dimension(1:grado) :: VecRaices !Hay una raiz menos que el grado
+integer i ,Metodo,maxiter
+real(8), dimension(1:grado+1) :: VecCoeficientes !Hay un coef  mas que el grado
+real(8), dimension(1:grado) :: VecRaices 
 complex(8), dimension(1:grado) :: VecRaicesCOMPLEJAS
 real(8) tol,diferencia
 
@@ -27,7 +27,8 @@ tol=0.00001
 !------Iteraciones-----!
 !write(*,*)"Ingrese maxima cantidad de iteraciones" 
 !read(*,*)maxiter
-maxiter=70
+maxiter=270
+
 
 Metodo=0
 
@@ -71,9 +72,12 @@ real(8), intent(in) :: VecRaices(:)
 complex(8), intent(in) :: VecRaicesCOMPLEJAS(:)
 integer i,grado
 
-do i=1, grado+1
-	write(*,*)"Raiz ",i,": ",VecRaices(i)
-	
+do i=1, grado
+	if (VecRaicesCOMPLEJAS(i)/=0) then
+		write(*,*)"Raiz ",i,": ",VecRaices(i)
+	else
+		write(*,*)"Raiz ",i,": ",VecRaicesCOMPLEJAS(i)
+	endif
 	
 enddo
 
@@ -166,10 +170,11 @@ real(8) :: VecCoeficientes(:)
 open(2,FILE="CoeficientesPolinomio.txt", action="read")
 
 
-write(*,'(A,I2,A)',advance='NO')"Polinomio de grado ",grado-1," : "
-do i=1,grado+1 
+write(*,'(A,I2,A)',advance='NO')"Polinomio de grado ",grado," : "
+do i=grado+1,1 ,-1
 	read(2,*)VecCoeficientes(i)
 	WRITE(*,'(F7.2,A,I2,A)',ADVANCE='NO')VecCoeficientes(i),"x^",i-1," + " !'(F4.2,A,I,A)'
+
 enddo
 
 write(*,*)
@@ -221,24 +226,25 @@ write(*,*)"-------------------------"
      error=maxval(abs(VecError))
      write(*,*)"iter",iter
      write(*,*)"Raices : ",VecRaices
+     write(*,*)VecRaices(1)
      write(*,*)"Errores : ",VecError
 end do 
 
 write(*,*)"Sale"
-    !if (maxiter<iter) then !si salio por iteraciones del do while significa que no se aproxima a 0 el error maximo
-	!	do i=0,grado-1
-	!		if (abs(VecError(i))>tol) then
-	!			CoefU=VecRaices(i)+VecRaices(i+1)
-	!			CoefV=(-1)*VecRaices_ANT(i)*VecRaices(i+1) !No se si va el -1 pero lo vi asi
-	!			CALL MetodoBairstow (VecCoeficientes,grado,tol,CoefU,CoefV)
-	!			CALL Resolvente(CoefU, CoefV, RaizComp1, RaizComp2)
-	!			VecRaicesCOMPLEJAS(i)=RaizComp1
-	!			VecRaicesCOMPLEJAS(i+1)=RaizComp2 ! en i+1
-	!		endif
-	!	enddo
-	!endif
+    if (maxiter<iter) then !si salio por iteraciones del do while significa que no se aproxima a 0 el error maximo
+		do i=0,grado-1
+			if (abs(VecError(i))>tol) then
+				CoefU=VecRaices(i)+VecRaices(i+1)
+				CoefV=(-1)*VecRaices_ANT(i)*VecRaices(i+1) !No se si va el -1 pero lo vi asi
+				CALL MetodoBairstow (VecCoeficientes,grado,tol,CoefU,CoefV)
+				CALL Resolvente(CoefU, CoefV, RaizComp1, RaizComp2)
+				VecRaicesCOMPLEJAS(i)=RaizComp1
+				VecRaicesCOMPLEJAS(i+1)=RaizComp2 ! en i+1
+			endif
+		enddo
+	endif
 
-
+call MuestraRaices(VecRaices,VecRaicesCOMPLEJAS,grado)
 
 end subroutine
 
@@ -255,7 +261,8 @@ VecRaices(1)=-1*(VecCoeficientes(grado+1-1))/(VecCoeficientes(grado+1))
 do i=1, grado-1
 
       VecError(i)=VecCoeficientes((grado+1)-i-1)/VecCoeficientes((grado+1)-i)
-      write(*,*)VecCoeficientes(grado-i-1),VecCoeficientes(grado-i),"  ",grado-i-1,"i=",i," grado=",grado,VecError(i)
+      write(*,*)VecCoeficientes(grado+1-i-1),VecCoeficientes(grado+1-i),"  ",grado-i-1,"i=",i," grado=",grado,VecError(i)
+      
 end do
 
 VecError(0)=0

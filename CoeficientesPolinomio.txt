@@ -1,0 +1,11 @@
+1.0
+3.9
+-140.40
+-274.0
+2908.80
+288.0
+
+x^5-5x^4-13x^3+41x^2+12x-36
+1 6 -1 2 -3
+
+\mathrm{f\left(x\right)=\left(x-10\right)\left(x-4\right)\left(x+6\right)\left(x+12\right)\left(\left(x-0.1\right)\right)}
